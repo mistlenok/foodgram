@@ -5,10 +5,10 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.validators import UniqueTogetherValidator
 
-from food.models import (Favorite, Follow, Ingredient, IngredientRecipe,
-                         Recipe, ShoppingCart, Tag)
 from .constants import RECIPES_LIMIT
 from .utils import Base64ImageField, add_ingredients
+from food.models import (Favorite, Follow, Ingredient, IngredientRecipe,
+                         Recipe, ShoppingCart, Tag)
 
 User = get_user_model()
 

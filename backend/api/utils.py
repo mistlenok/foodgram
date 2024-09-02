@@ -1,9 +1,10 @@
 import base64
 
 from django.core.files.base import ContentFile
-from food.models import IngredientRecipe
 from rest_framework import serializers, status
 from rest_framework.response import Response
+
+from food.models import IngredientRecipe
 
 
 class Base64ImageField(serializers.ImageField):

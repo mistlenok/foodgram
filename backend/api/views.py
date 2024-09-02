@@ -11,8 +11,6 @@ from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from food.models import (Favorite, Follow, Ingredient, IngredientRecipe,
-                         Recipe, ShoppingCart, Tag)
 from .filters import RecipeFilter
 from .pagination import CustomPagination
 from .permissions import RecipePermission
@@ -22,6 +20,8 @@ from .serializers import (FavoriteSerializer, FollowSerializer,
                           ShoppingCartSerializer, SubscriptionsSerializer,
                           TagSerializer, UserAvatarSerializer)
 from .utils import add_recipe, delete_recipe
+from food.models import (Favorite, Follow, Ingredient, IngredientRecipe,
+                         Recipe, ShoppingCart, Tag)
 
 User = get_user_model()
 
