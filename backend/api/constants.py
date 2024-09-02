@@ -1,0 +1,1 @@
+RECIPES_LIMIT = 6
