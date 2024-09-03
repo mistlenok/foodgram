@@ -11,12 +11,13 @@ services:
     image: postgres:13.10
     env_file: .env
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - pg_data:/var/lib/postgresql/data/
 
   backend:
-    image: mistlenok/foodgram_backend
+    build: ./backend/
     env_file: .env
     volumes:
+      - ./backend/data:/app/data/
       - static:/backend_static/
       - media:/media/
       - docs:/docs/
@@ -24,17 +25,18 @@ services:
       - db
 
   frontend:
-    image: mistlenok/foodgram_frontend
     env_file: .env
-    command: cp -r /app/result_build/. /frontend/
+    build: ./frontend/
+    command: cp -r /app/result_build/. /static/
     volumes:
-      - /frontend/:/app/result_build/
+      - static:/frontend_static/
+      - docs:/docs/
 
-  gateway:
-    image: mistlenok/foodgram_gateway
+  nginx:
+    build: ./infra/
     env_file: .env
     ports:
-      - 8013:80
+      - "8000:80"
     volumes:
       - static:/staticfiles/
       - media:/mediafiles/
