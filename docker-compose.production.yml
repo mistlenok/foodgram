@@ -24,9 +24,9 @@ services:
   frontend:
     image: mistlenok/foodgram_frontend
     env_file: .env
-    command: cp -r /app/result_build/. /frontend_static/
+    command: cp -r /app/build/. /static/
     volumes:
-      - static:/frontend_static/
+      - static:/static/
 
   gateway:
     image: mistlenok/foodgram_gateway
