@@ -1,7 +1,6 @@
 version: '3.3'
 
 volumes:
-  docs:
   pg_data:
   static:
   media:
@@ -19,16 +18,15 @@ services:
     volumes:
       - static:/backend_static/
       - media:/media/
-      - docs:/docs/
     depends_on:
       - db
 
   frontend:
     image: mistlenok/foodgram_frontend
     env_file: .env
-    command: cp -r /app/result_build/. /frontend/
+    command: cp -r /app/result_build/. /frontend_static/
     volumes:
-      - /frontend/:/app/result_build/
+      - static:/frontend_static/
 
   gateway:
     image: mistlenok/foodgram_gateway
@@ -38,7 +36,6 @@ services:
     volumes:
       - static:/staticfiles/
       - media:/mediafiles/
-      - docs:/docfiles/
     depends_on:
       - backend
       - frontend
