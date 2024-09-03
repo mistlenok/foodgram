@@ -33,27 +33,6 @@ def redirect_to_original(request, short_code):
     return redirect(reverse(url))
 
 
-class RecipeLinkView(APIView):
-    permission_classes = [permissions.AllowAny]
-
-    def get(self, request, recipe_id):
-        try:
-            recipe = Recipe.objects.get(pk=recipe_id)
-            if not recipe.short_url:
-                recipe.short_url = recipe.generate_short_url()
-                recipe.save(update_fields=['short_url'])
-            serializer = RecipeShortLinkSerializer(
-                recipe,
-                context={'request': request}
-            )
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        except Recipe.DoesNotExist:
-            return Response(
-                {"detail": "Recipe not found."},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-
 @api_view(['PUT', 'DELETE'])
 def user_avatar(request):
     """Добавляет, меняет или удаляет аватар пользователю"""
@@ -120,9 +99,31 @@ def download_shopping_cart(request):
     return response
 
 
+class RecipeLinkView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, recipe_id):
+        try:
+            recipe = Recipe.objects.get(pk=recipe_id)
+            if not recipe.short_url:
+                recipe.short_url = recipe.generate_short_url()
+                recipe.save(update_fields=['short_url'])
+            serializer = RecipeShortLinkSerializer(
+                recipe,
+                context={'request': request}
+            )
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Recipe.DoesNotExist:
+            return Response(
+                {"detail": "Recipe not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
+    permission_classes = [permissions.AllowAny]
     filter_backends = (filters.SearchFilter,)
     search_fields = ('^name',)
 
@@ -130,6 +131,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
+    permission_classes = [permissions.AllowAny]
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
