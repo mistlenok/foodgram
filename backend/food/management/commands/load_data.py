@@ -1,9 +1,9 @@
-import os
 import json
+import os
 
 from django.core.management.base import BaseCommand
 
-from food.models import Tag, Ingredient
+from food.models import Ingredient, Tag
 
 JSON_PATH = os.path.join('/app/data')
 
