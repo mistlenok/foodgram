@@ -33,6 +33,7 @@ class RecipeFilter(FilterSet):
         if self.request.user.is_authenticated and value:
             return queryset.filter(shoppingcart__user=self.request.user)
         return queryset
+
 class IngredientFilter(SearchFilter):
     """Фильтрация для ингредиентов."""
 
