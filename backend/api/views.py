@@ -5,13 +5,13 @@ from django.db.models import Sum
 from django.shortcuts import HttpResponse, get_object_or_404, redirect
 from django.urls import reverse
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import permissions, status, viewsets
+from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import api_view
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .filters import IngredientFilter, RecipeFilter
+from .filters import RecipeFilter
 from .pagination import CustomPagination
 from .permissions import RecipePermission
 from .serializers import (FavoriteSerializer, FollowSerializer,
@@ -126,7 +126,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     permission_classes = (permissions.AllowAny,)
-    filter_backends = (IngredientFilter,)
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ('^name',)
 
 
