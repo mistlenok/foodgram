@@ -130,12 +130,11 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(), many=True
     )
-    author = serializers.SlugRelatedField('username', read_only=True)
     image = Base64ImageField(required=False, allow_null=True)
 
     class Meta:
         model = Recipe
-        fields = ('ingredients', 'tags', 'author', 'image',
+        fields = ('ingredients', 'tags', 'image',
                   'name', 'text', 'cooking_time')
 
     def validate_ingredients(self, value):
@@ -161,6 +160,11 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                     {'tags': 'Теги повторяются!'})
             tags_list.append(tag)
         return value
+
+    def validate_image(self, image):
+        if self.context.get("request").method == "POST" and not image:
+            raise serializers.ValidationError('Image must be required')
+        return image
 
     def create(self, validated_data):
         ingredients = validated_data.pop('recipe_ingredients')
