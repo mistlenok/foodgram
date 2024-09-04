@@ -34,6 +34,7 @@ class RecipeFilter(FilterSet):
             return queryset.filter(shoppingcart__user=self.request.user)
         return queryset
 
+
 class IngredientFilter(SearchFilter):
     """Фильтрация для ингредиентов."""
 
