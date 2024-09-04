@@ -100,6 +100,7 @@ def download_shopping_cart(request):
 
 
 class RecipeLinkView(APIView):
+    """Вьюсет для коротких ссылок."""
     permission_classes = [permissions.AllowAny]
 
     def get(self, request, recipe_id):
@@ -121,20 +122,23 @@ class RecipeLinkView(APIView):
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
+    """Вьюсет для ингредиентов."""
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    permission_classes = [permissions.AllowAny]
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('^name',)
+    permission_classes = (permissions.AllowAny, permissions.IsAuthenticated)
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    search_fields = ('name',)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
+    """Вьюсет для тегов."""
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = (permissions.AllowAny, permissions.IsAuthenticated)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
+    """Вьюсет для рецептов."""
     queryset = Recipe.objects.all()
     pagination_class = CustomPagination
     permission_classes = (RecipePermission,)
@@ -151,6 +155,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
 
 class FollowListViewSet(ListAPIView, viewsets.GenericViewSet):
+    """Вьюсет для подписок."""
     serializer_class = SubscriptionsSerializer
     pagination_class = CustomPagination
 
@@ -159,10 +164,10 @@ class FollowListViewSet(ListAPIView, viewsets.GenericViewSet):
 
 
 class RecipeShortLinkViewSet(ListAPIView, viewsets.GenericViewSet):
+    """Вьюсет для коротких линков."""
     serializer_class = RecipeShortLinkSerializer
 
     def get_queryset(self):
-        print(self.request)
         return Recipe.objects.filter(id=self.request.recipe_id)
 
 
