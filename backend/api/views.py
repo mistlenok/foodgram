@@ -125,7 +125,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     """Вьюсет для ингредиентов."""
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    permission_classes = (permissions.AllowAny, permissions.IsAuthenticated)
+    permission_classes = (permissions.AllowAny,)
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ('name',)
 
@@ -134,7 +134,7 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
     """Вьюсет для тегов."""
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    permission_classes = (permissions.AllowAny, permissions.IsAuthenticated)
+    permission_classes = (permissions.AllowAny,)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
