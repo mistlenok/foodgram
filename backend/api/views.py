@@ -5,7 +5,7 @@ from django.db.models import Sum
 from django.shortcuts import HttpResponse, get_object_or_404, redirect
 from django.urls import reverse
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, permissions, status, viewsets
+from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import api_view
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
@@ -143,7 +143,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     pagination_class = CustomPagination
     permission_classes = (RecipePermission,)
     filter_backends = (DjangoFilterBackend,)
-    filterset_class = RecipeFilter
+    et_class = RecipeFilter
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
