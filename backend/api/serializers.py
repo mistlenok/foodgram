@@ -183,13 +183,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         instance.tags.set(tags)
         return super().update(instance, validated_data)
 
-    def to_representation(self, instance):
-        request = self.context.get('request')
-        return RecipeListSerializer(
-            instance,
-            context={'request': request}
-        ).data
-
 
 class RecipeSmallSerializer(serializers.ModelSerializer):
     """Сериализатор для работы с краткой информацией о рецепте."""
