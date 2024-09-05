@@ -139,6 +139,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                   'name', 'text', 'cooking_time')
 
     def validate(self, data):
+        print(data)
         if 'ingredients' not in data:
             raise serializers.ValidationError(
                 {'ingredients': 'This field is required.'}
@@ -179,7 +180,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return image
 
     def create(self, validated_data):
-        print(validated_data)
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
         recipe = Recipe.objects.create(
