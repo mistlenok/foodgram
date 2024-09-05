@@ -139,6 +139,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                   'name', 'text', 'cooking_time')
 
     def validate(self, data):
+        print(data)
         if 'ingredients' not in data:
             raise serializers.ValidationError(
                 {'ingredients': 'This field is required.'}
