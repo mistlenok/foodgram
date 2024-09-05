@@ -6,7 +6,8 @@ from django.utils.translation import gettext as _
 from .constants import (EMAIL_MAX_LENGTH, INGREDIENT_MAX_LENGTH,
                         MAX_MEASURMENT_UNIT, MIN_COOKING_TIME,
                         MIN_RECIPE_AMOUNT, NAME_MAX_LENGTH,
-                        SHORT_URL_MAX_LENGTH, TAG_MAX_LENGTH, USERNAME_REGEXP)
+                        RECIPE_NAME_MAX_LENGTH, SHORT_URL_MAX_LENGTH,
+                        TAG_MAX_LENGTH, USERNAME_REGEXP)
 from .utils import generate_hash
 
 
@@ -65,7 +66,7 @@ class Ingredient(models.Model):
     name = models.CharField(
         'Название',
         max_length=INGREDIENT_MAX_LENGTH,
-        db_index=True,
+        unique=True,
     )
     measurement_unit = models.CharField(
         'Единицы измерения',
@@ -75,6 +76,12 @@ class Ingredient(models.Model):
     class Meta:
         verbose_name = 'ингредиент'
         verbose_name_plural = 'Ингредиенты'
+        constraints = (
+            models.UniqueConstraint(
+                fields=('name', 'measurement_unit'),
+                name='unique_name_measurement_unit',
+            ),
+        )
 
     def __str__(self):
         return self.name
@@ -82,24 +89,26 @@ class Ingredient(models.Model):
 
 class Recipe(models.Model):
     """Модель рецепта"""
-    name = models.CharField('Название', max_length=256)
+    name = models.CharField('Название', max_length=RECIPE_NAME_MAX_LENGTH)
     text = models.TextField('Описание')
     ingredients = models.ManyToManyField(
         Ingredient,
         verbose_name='Ингредиенты',
-        through='IngredientRecipe'
+        through='IngredientRecipe',
+        related_name='recipes'
     )
     tags = models.ManyToManyField(
         Tag,
+        db_index=True,
         verbose_name='Тэги',
-        related_name='tags'
+        related_name='recipes',
     )
     cooking_time = models.IntegerField(
-        'Время приготовления', validators=[
-            validators.MinValueValidator(
-                MIN_COOKING_TIME,
-                message=f'Минимальное значение поля - {MIN_COOKING_TIME}.'
-            )
+        'Время приготовления',
+        validators=[validators.MinValueValidator(
+            MIN_COOKING_TIME,
+            message=f'Минимальное значение поля - {MIN_COOKING_TIME}.'
+        )
         ]
     )
     author = models.ForeignKey(
@@ -108,18 +117,31 @@ class Recipe(models.Model):
         related_name='recipes',
         verbose_name='Автор рецепта'
     )
-    image = models.ImageField(upload_to='recipes/')
+    image = models.ImageField(
+        'Фото рецепта',
+        upload_to='recipes/',
+        validators=(
+            validators.FileExtensionValidator(
+                allowed_extensions=('png', 'jpg', 'jpeg')
+            ),
+        ),
+    )
     short_url = models.CharField(
         max_length=SHORT_URL_MAX_LENGTH,
         unique=True,
         blank=True,
         verbose_name='Короткий URL'
     )
+    pub_date = models.DateTimeField(
+        'Дата публикации',
+        auto_now_add=True,
+        db_index=True
+    )
 
     class Meta:
         verbose_name = 'рецепт'
         verbose_name_plural = 'Рецепты'
-        ordering = ['-id']
+        ordering = ('-pub_date',)
 
     def save(self, *args, **kwargs):
         if not self.short_url:
@@ -143,7 +165,11 @@ class IngredientRecipe(models.Model):
     Промежуточная модель между таблицами
     Recipe и Ingredient
     """
-    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
+    ingredient = models.ForeignKey(
+        Ingredient,
+        on_delete=models.CASCADE,
+        related_name='recipe_ingredients'
+    )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
