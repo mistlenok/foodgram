@@ -69,15 +69,6 @@ class IngredientRecipeWriteSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(
         queryset=Ingredient.objects.all()
     )
-    amount = serializers.IntegerField(
-        min_value=1,
-        max_value=1000,
-        error_messages={
-            'min_value': 'Кол-во ингредиента не может быть меньше 1',
-            'max_value': 'Кол-во ингредиента не может быть больше 1000',
-            'invalid': 'Укажите корректное кол-во ингредиента.',
-        }
-    )
 
     class Meta:
         model = IngredientRecipe
@@ -133,7 +124,7 @@ class RecipeListSerializer(serializers.ModelSerializer):
 class RecipeWriteSerializer(serializers.ModelSerializer):
     """Сериализатор для создания/изменения/удаления рецептов."""
     ingredients = IngredientRecipeWriteSerializer(
-        many=True, allow_empty=False, source='recipe_ingredients'
+        many=True, allow_empty=False
     )
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(),
@@ -147,25 +138,16 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         fields = ('ingredients', 'tags', 'image',
                   'name', 'text', 'cooking_time')
 
-    def to_representation(self, instance):
-        return RecipeListSerializer(instance, context=self.context).data
-
-    def create(self, validated_data):
-        ingredients = validated_data.pop('recipe_ingredients')
-        tags = validated_data.pop('tags')
-        recipe = Recipe.objects.create(**validated_data)
-        recipe.tags.set(tags)
-        add_ingredients(ingredients, recipe)
-        return recipe
-
-    def update(self, instance, validated_data):
-        ingredients = validated_data.pop('recipe_ingredients')
-        instance.ingredients.clear()
-        add_ingredients(ingredients, instance)
-        tags = validated_data.pop('tags')
-        instance.tags.clear()
-        instance.tags.set(tags)
-        return super().update(instance, validated_data)
+    def validate(self, data):
+        if 'ingredients' not in data:
+            raise serializers.ValidationError(
+                {'ingredients': 'This field is required.'}
+            )
+        if 'tags' not in data:
+            raise serializers.ValidationError(
+                {'tags': 'This field is required.'}
+            )
+        return super().validate(data)
 
     def validate_ingredients(self, value):
         ingredients = value
@@ -195,6 +177,26 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         if self.context.get('request').method == 'POST' and not image:
             raise serializers.ValidationError('Нужно загрузить изображение.')
         return image
+
+    def create(self, validated_data):
+        ingredients = validated_data.pop('ingredients')
+        tags = validated_data.pop('tags')
+        recipe = Recipe.objects.create(**validated_data)
+        recipe.tags.set(tags)
+        add_ingredients(ingredients, recipe)
+        return recipe
+
+    def update(self, instance, validated_data):
+        ingredients = validated_data.pop('ingredients')
+        instance.ingredients.clear()
+        add_ingredients(ingredients, instance)
+        tags = validated_data.pop('tags')
+        instance.tags.clear()
+        instance.tags.set(tags)
+        return super().update(instance, validated_data)
+
+    def to_representation(self, instance):
+        return RecipeListSerializer(instance, context=self.context).data
 
 
 class RecipeSmallSerializer(serializers.ModelSerializer):
