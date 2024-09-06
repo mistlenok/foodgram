@@ -3,7 +3,6 @@ from urllib.parse import urljoin
 from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.shortcuts import HttpResponse, get_object_or_404, redirect
-from django.urls import reverse
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
 from rest_framework import filters, permissions, status, viewsets
@@ -60,7 +59,7 @@ class CustomUserViewSet(UserViewSet):
     @action(
         methods=('POST', 'DELETE',),
         permission_classes=(permissions.IsAuthenticated,),
-        detail=False,
+        detail=True,
         url_path='subscribe'
     )
     def subscribe(self, request, id):
@@ -226,5 +225,5 @@ class RecipeShortLinkViewSet(ListAPIView, viewsets.GenericViewSet):
 def redirect_to_original(request, short_code):
     recipe = get_object_or_404(Recipe, short_url=short_code)
     host = request.get_host()
-    url = urljoin(f'{host}', f'{recipe.id}')
-    return redirect(reverse(url))
+    url = urljoin(f'http://{host}/api/', f'recipes/{recipe.id}')
+    return redirect(url)
