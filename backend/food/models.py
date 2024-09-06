@@ -119,7 +119,7 @@ class Recipe(models.Model):
     )
     image = models.ImageField(
         'Фото рецепта',
-        upload_to='recipes/',
+        upload_to='recipes/images/',
         validators=(
             validators.FileExtensionValidator(
                 allowed_extensions=('png', 'jpg', 'jpeg')

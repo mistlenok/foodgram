@@ -139,7 +139,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                   'name', 'text', 'cooking_time')
 
     def validate(self, data):
-        print(data)
         if 'ingredients' not in data:
             raise serializers.ValidationError(
                 {'ingredients': 'This field is required.'}
@@ -157,7 +156,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             ingredient = get_object_or_404(Ingredient, name=item['id'])
             if ingredient in ingredients_list:
                 raise ValidationError(
-                    {'ingredients': 'Ингридиенты уже добавлен в рецепт!'})
+                    {'ingredients': 'Ингридиент уже добавлен в рецепт!'})
             if int(item['amount']) <= 0:
                 raise ValidationError(
                     {'amount': 'Количество должно быть больше 0!'})
