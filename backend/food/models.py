@@ -132,16 +132,11 @@ class Recipe(models.Model):
         blank=True,
         verbose_name='Короткий URL'
     )
-    pub_date = models.DateTimeField(
-        'Дата публикации',
-        auto_now_add=True,
-        db_index=True
-    )
 
     class Meta:
         verbose_name = 'рецепт'
         verbose_name_plural = 'Рецепты'
-        ordering = ('-pub_date',)
+        ordering = ('-id',)
 
     def save(self, *args, **kwargs):
         if not self.short_url:

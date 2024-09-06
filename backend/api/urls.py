@@ -3,6 +3,8 @@ from rest_framework import routers
 
 from . import views
 
+app_name = 'api'
+
 router = routers.DefaultRouter()
 router.register('ingredients', views.IngredientViewSet, basename='ingredients')
 router.register('tags', views.TagViewSet, basename='tags')
@@ -11,5 +13,5 @@ router.register('users', views.CustomUserViewSet, basename='users')
 
 urlpatterns = [
     path('auth/', include('djoser.urls.authtoken')),
-    path('', include(router.urls)),
+    path('', include(router.urls))
 ]

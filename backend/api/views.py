@@ -225,5 +225,5 @@ class RecipeShortLinkViewSet(ListAPIView, viewsets.GenericViewSet):
 def redirect_to_original(request, short_code):
     recipe = get_object_or_404(Recipe, short_url=short_code)
     host = request.get_host()
-    url = urljoin(f'http://{host}/api/', f'recipes/{recipe.id}')
+    url = urljoin(f'http://{host}/api/', f'recipes/{recipe.id}/')
     return redirect(url)
