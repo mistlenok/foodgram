@@ -9,7 +9,7 @@ from .models import (Favorite, Follow, Ingredient, IngredientRecipe, Recipe,
 class UserAdmin(admin.ModelAdmin):
     list_display = ('username', 'email', 'first_name',
                     'last_name', 'is_staff')
-    list_filter = ('is_staff', 'is_staff')
+    list_filter = ('is_staff', )
     empty_value_display = 'Не заполнено'
     list_editable = ('is_staff',)
     search_fields = ('username', 'email')
