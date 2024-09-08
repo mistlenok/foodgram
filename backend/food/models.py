@@ -7,7 +7,6 @@ from .constants import (INGREDIENT_MAX_LENGTH, MAX_COOKING_TIME,
                         MIN_COOKING_TIME, MIN_RECIPE_AMOUNT,
                         RECIPE_NAME_MAX_LENGTH, SHORT_URL_MAX_LENGTH,
                         TAG_MAX_LENGTH)
-from .utils import generate_short_link
 
 User = get_user_model()
 
@@ -100,20 +99,9 @@ class Recipe(models.Model):
         max_length=SHORT_URL_MAX_LENGTH,
         unique=True,
         blank=True,
+        null=True,
         verbose_name='Короткий URL'
     )
-
-    def save(self, *args, **kwargs):
-        if not self.short_url:
-            self.short_url = self.generate_short_url()
-        super().save(*args, **kwargs)
-
-    def generate_short_url(self):
-        """Функция для генерации коротких ссылок"""
-        short_url = generate_short_link(self.id)
-        while Recipe.objects.filter(short_url=short_url).exists():
-            short_url = generate_short_link(self.id)
-        return short_url
 
     class Meta:
         verbose_name = 'рецепт'

@@ -1,9 +1,11 @@
 import base64
+import hashlib
 
 from django.core.files.base import ContentFile
 from rest_framework import serializers, status
 from rest_framework.response import Response
 
+from .constants import MAX_HASH
 from food.models import IngredientRecipe
 
 
@@ -57,3 +59,9 @@ def delete_recipe(request, model_name, instance, error_message):
                         status=status.HTTP_400_BAD_REQUEST)
     model_name.objects.filter(user=request.user, recipe=instance).delete()
     return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+def generate_short_url(recipe_id):
+    """Вспомогательная функция для генерации коротких ссылок"""
+    hash_object = hashlib.md5(str(recipe_id).encode())
+    return hash_object.hexdigest()[:MAX_HASH]

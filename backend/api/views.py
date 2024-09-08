@@ -7,7 +7,6 @@ from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 
 from .filters import IngredientFilter, RecipeFilter
@@ -19,7 +18,7 @@ from .serializers import (CustomUserSerializer, FavoriteSerializer,
                           RecipeWriteSerializer, ShoppingCartSerializer,
                           SubscriptionsSerializer, TagSerializer,
                           UserAvatarSerializer)
-from .utils import add_recipe, delete_recipe
+from .utils import add_recipe, delete_recipe, generate_short_url
 from food.models import (Favorite, Ingredient, IngredientRecipe, Recipe,
                          ShoppingCart, Tag)
 from users.models import Follow
@@ -211,24 +210,21 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(
         methods=('GET',),
+        permission_classes=(permissions.AllowAny,),
         detail=True,
         url_path='get-link',
     )
-    def get_short_link(self, request, pk):
+    def get_short_url(self, request, pk):
+        """Функция для вывода коротких ссылок."""
         recipe = get_object_or_404(Recipe, id=pk)
+        if not recipe.short_url:
+            recipe.short_url = generate_short_url(pk)
+            recipe.save(update_fields=['short_url'])
         serializer = RecipeShortLinkSerializer(
             recipe,
             context={'request': request}
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-class RecipeShortLinkViewSet(ListAPIView, viewsets.GenericViewSet):
-    """Вьюсет для коротких линков."""
-    serializer_class = RecipeShortLinkSerializer
-
-    def get_queryset(self):
-        return Recipe.objects.filter(id=self.request.recipe_id)
 
 
 def redirect_to_original(request, short_code):
