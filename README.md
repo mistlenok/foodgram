@@ -19,7 +19,7 @@
 1. Клонируйте репозиторий и перейдите в директорию проекта:
 
    ```bash
-   git clone https://github.com/Mooorshum/foodgram.git
+   git clone https://github.com/mistlenok/foodgram.git
    cd foodgram
    ```
 
@@ -91,21 +91,25 @@
 
 4. Скопируйте docker-compose.production.yml и .env в директорию foodgram/ на своем сервере:
    ```bash
-   scp -i PATH_TO_SSH_KEY/SSH_KEY_NAME docker-compose.yml YOUR_USERNAME@SERVER_IP_ADDRESS:/home/YOUR_USERNAME/foodgram/docker-compose.yml
+   scp -i PATH_TO_SSH_KEY/SSH_KEY_NAME docker-compose.production.yml YOUR_USERNAME@SERVER_IP_ADDRESS:/home/YOUR_USERNAME/foodgram/docker-compose.production.yml
    ```
 
 5. Запустите Docker Compose:
 
    ```bash
-   sudo docker-compose -f /home/YOUR_USERNAME/foodgram/docker-compose.yml up -d
+   sudo docker-compose -f /home/YOUR_USERNAME/foodgram/docker-compose.production.yml up -d
    ```
 
 6. Выполните миграцию и сборку статических файлов, а также их копирование в директорию /backend_static/static/
 
    ```bash
-   sudo docker-compose -f /home/YOUR_USERNAME/foodgram/docker-compose.yml exec backend python manage.py migrate
-   sudo docker-compose -f /home/YOUR_USERNAME/foodgram/docker-compose.yml exec backend python manage.py collectstatic
-   sudo docker-compose -f /home/YOUR_USERNAME/foodgram/docker-compose.yml exec backend cp -r /app/collected_static/. /backend_static/static/
+   sudo docker-compose -f /home/YOUR_USERNAME/foodgram/docker-compose.production.yml exec backend python manage.py migrate
+   sudo docker-compose -f /home/YOUR_USERNAME/foodgram/docker-compose.production.yml exec backend python manage.py collectstatic
+   sudo docker-compose -f /home/YOUR_USERNAME/foodgram/docker-compose.production.yml exec backend cp -r /app/collected_static/. /backend_static/static/
+   ```
+6.1. Можно добавить данные по ингредиентам из заранее подготовленного json файла. Для этого нужно выполнить команду:
+   ```bash
+   sudo docker-compose -f /home/YOUR_USERNAME/foodgram/docker-compose.production.yml exec backend python manage.py load_data
    ```
 
 7. Откройте файл конфигурации Nginx:
