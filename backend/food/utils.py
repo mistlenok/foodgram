@@ -1,13 +1,9 @@
-import string
-from random import choice, randint
+import hashlib
 
-from .constants import MAX_HASH, MIN_HASH
+from .constants import MAX_HASH
 
 
-def generate_hash() -> str:
+def generate_short_link(recipe_id):
     """Вспомогательная функция для генерации коротких ссылок"""
-
-    return ''.join(
-        choice(string.ascii_letters + string.digits)
-        for _ in range(randint(MIN_HASH, MAX_HASH))
-    )
+    hash_object = hashlib.md5(str(recipe_id).encode())
+    return hash_object.hexdigest()[:MAX_HASH]

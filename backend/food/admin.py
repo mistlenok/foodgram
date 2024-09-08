@@ -1,18 +1,8 @@
 from django.contrib import admin
 from django.db.models import Count
 
-from .models import (Favorite, Follow, Ingredient, IngredientRecipe, Recipe,
-                     ShoppingCart, Tag, User)
-
-
-@admin.register(User)
-class UserAdmin(admin.ModelAdmin):
-    list_display = ('username', 'email', 'first_name',
-                    'last_name', 'is_staff')
-    list_filter = ('is_staff', )
-    empty_value_display = 'Не заполнено'
-    list_editable = ('is_staff',)
-    search_fields = ('username', 'email')
+from .models import (Favorite, Ingredient, IngredientRecipe, Recipe,
+                     ShoppingCart, Tag)
 
 
 @admin.register(Ingredient)
@@ -29,6 +19,11 @@ class TagAdmin(admin.ModelAdmin):
     search_fields = ('name', 'slug')
 
 
+class TagInLine(admin.StackedInline):
+    model = Tag.recipes.through
+    extra = 0
+
+
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'author', 'cooking_time', 'favorited_count')
@@ -36,6 +31,9 @@ class RecipeAdmin(admin.ModelAdmin):
     list_filter = ('tags', 'author')
     raw_id_fields = ('author',)
     filter_horizontal = ('tags',)
+    inlines = [
+        TagInLine,
+    ]
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(
@@ -62,9 +60,3 @@ class FavoriteAdmin(admin.ModelAdmin):
 class ShoppingCartAdmin(admin.ModelAdmin):
     list_display = ('id', 'recipe', 'user')
     search_fields = ('recipe__name', 'user__username')
-
-
-@admin.register(Follow)
-class FollowAdmin(admin.ModelAdmin):
-    list_display = ('user', 'following')
-    search_fields = ('user__username', 'following__username')

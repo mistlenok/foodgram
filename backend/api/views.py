@@ -13,68 +13,70 @@ from rest_framework.response import Response
 from .filters import IngredientFilter, RecipeFilter
 from .pagination import CustomPagination
 from .permissions import RecipePermission
-from .serializers import (FavoriteSerializer, FollowSerializer,
-                          IngredientSerializer, RecipeListSerializer,
-                          RecipeShortLinkSerializer, RecipeWriteSerializer,
-                          ShoppingCartSerializer, SubscriptionsSerializer,
-                          TagSerializer, UserAvatarSerializer)
+from .serializers import (CustomUserSerializer, FavoriteSerializer,
+                          FollowSerializer, IngredientSerializer,
+                          RecipeListSerializer, RecipeShortLinkSerializer,
+                          RecipeWriteSerializer, ShoppingCartSerializer,
+                          SubscriptionsSerializer, TagSerializer,
+                          UserAvatarSerializer)
 from .utils import add_recipe, delete_recipe
-from food.models import (Favorite, Follow, Ingredient, IngredientRecipe,
-                         Recipe, ShoppingCart, Tag)
+from food.models import (Favorite, Ingredient, IngredientRecipe, Recipe,
+                         ShoppingCart, Tag)
+from users.models import Follow
 
 User = get_user_model()
 
 
 class CustomUserViewSet(UserViewSet):
     queryset = User.objects.all()
-    permission_classes = (permissions.AllowAny,)
     pagination_class = CustomPagination
+    permission_classes = (permissions.AllowAny,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
 
     @action(
-        methods=('PUT', 'DELETE'),
+        detail=False,
+        methods=('GET',),
+        permission_classes=[permissions.IsAuthenticated]
+    )
+    def me(self, request):
+        serializer = CustomUserSerializer(request.user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(
+        methods=('PUT',),
         permission_classes=(permissions.IsAuthenticated,),
         detail=False,
         url_path='me/avatar'
     )
     def user_avatar(self, request):
-        """Добавляет, меняет или удаляет аватар пользователю"""
-        user = User.objects.get(email=request.user.email)
-        if request.method == 'PUT':
-            if request.user.avatar:
-                request.user.avatar.delete()
-            serializer = UserAvatarSerializer(
-                user, data=request.data, partial=True
-            )
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            return Response(
-                serializer.errors, status=status.HTTP_400_BAD_REQUEST
-            )
-        user.avatar.delete()
+        """Добавляет или меняет аватар пользователя."""
+        user = self.request.user
+        if request.user.avatar:
+            request.user.avatar.delete()
+        serializer = UserAvatarSerializer(
+            user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @user_avatar.mapping.delete
+    def delete_avatar(self, request):
+        """Удаляет аватар пользователя."""
+        user = request.user
+        if user.avatar:
+            user.avatar.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
-        methods=('POST', 'DELETE',),
+        methods=('POST',),
         permission_classes=(permissions.IsAuthenticated,),
         detail=True,
         url_path='subscribe'
     )
     def subscribe(self, request, id):
-        """Создание/удаление подписки на пользователя."""
+        """Создание подписки на пользователя."""
         following = get_object_or_404(User, pk=id)
-        if request.method == 'DELETE':
-            if not Follow.objects.filter(user=request.user,
-                                         following=following).exists():
-                return Response(
-                    {'errors': 'Вы не подписаны на этого пользователя'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            Follow.objects.get(user=request.user.id,
-                               following=id).delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
         serializer = FollowSerializer(
             data={'user': request.user.id, 'following': following.id},
             context={'request': request}
@@ -82,6 +84,18 @@ class CustomUserViewSet(UserViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @subscribe.mapping.delete
+    def delete_subscribe(self, request):
+        """Удаление подписки на пользователя."""
+        following = get_object_or_404(User, pk=id)
+        if not following.following.filter(user=request.user).exists():
+            return Response(
+                {'errors': 'Вы не подписаны на этого пользователя'},
+                status=status.HTTP_400_BAD_REQUEST)
+        get_object_or_404(Follow, user=request.user.id,
+                          following=id).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         methods=('GET',),
@@ -110,7 +124,6 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     """Вьюсет для ингредиентов."""
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    permission_classes = (permissions.AllowAny,)
     filter_backends = (IngredientFilter,)
     search_fields = ('^name',)
 
@@ -119,7 +132,6 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
     """Вьюсет для тегов."""
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    permission_classes = (permissions.AllowAny,)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -161,52 +173,48 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return response
 
     @action(
-        methods=('POST', 'DELETE',),
+        methods=('POST',),
         permission_classes=(permissions.IsAuthenticated,),
         detail=True,
         url_path='favorite'
     )
     def favorite(self, request, pk):
-        """
-        Удаление/добавление рецептов в избранное.
-        """
+        """Добавление рецептов в избранное."""
         recipe = get_object_or_404(Recipe, id=pk)
-        if request.method == 'DELETE':
-            error_message = f'Рецепт {recipe} не добавлен в избранное'
-            return delete_recipe(
-                request, Favorite, recipe, error_message
-            )
         return add_recipe(request, recipe, FavoriteSerializer)
 
+    @favorite.mapping.delete
+    def delete_favorite(self, request, pk):
+        """Удаление рецептов из избранного."""
+        recipe = get_object_or_404(Recipe, id=pk)
+        error_message = f'Рецепт {recipe} не добавлен в избранное'
+        return delete_recipe(request, Favorite, recipe, error_message)
+
     @action(
-        methods=('POST', 'DELETE',),
+        methods=('POST',),
         permission_classes=(permissions.IsAuthenticated,),
         detail=True,
         url_path='shopping_cart'
     )
     def shopping_cart(self, request, pk):
-        """
-        Удаление/добавление рецепта в список покупок.
-        """
+        """Добавление рецепта в список покупок."""
         recipe = get_object_or_404(Recipe, id=pk)
-        if request.method == 'DELETE':
-            error_message = f'Рецепт {recipe} не добавлен в список покупок'
-            return delete_recipe(
-                request, ShoppingCart, recipe, error_message
-            )
         return add_recipe(request, recipe, ShoppingCartSerializer)
+
+    @shopping_cart.mapping.delete
+    def shopping_cart_delete(self, request, pk):
+        """Удаление рецепта из списка покупок."""
+        recipe = get_object_or_404(Recipe, id=pk)
+        error_message = f'Рецепт {recipe} не добавлен в список покупок'
+        return delete_recipe(request, ShoppingCart, recipe, error_message)
 
     @action(
         methods=('GET',),
-        permission_classes=(permissions.AllowAny,),
         detail=True,
         url_path='get-link',
     )
     def get_short_link(self, request, pk):
         recipe = get_object_or_404(Recipe, id=pk)
-        if not recipe.short_url:
-            recipe.short_url = recipe.generate_short_url()
-            recipe.save(update_fields=['short_url'])
         serializer = RecipeShortLinkSerializer(
             recipe,
             context={'request': request}
@@ -223,7 +231,8 @@ class RecipeShortLinkViewSet(ListAPIView, viewsets.GenericViewSet):
 
 
 def redirect_to_original(request, short_code):
+    """Перенаправление с короткой ссылки на обычную."""
     recipe = get_object_or_404(Recipe, short_url=short_code)
     host = request.get_host()
-    url = urljoin(f'http://{host}/', f'recipes/{recipe.id}/')
+    url = urljoin(f'http://{host}/api/', f'recipes/{recipe.id}/')
     return redirect(url)

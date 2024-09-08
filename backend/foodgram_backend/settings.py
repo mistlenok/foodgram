@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     'djoser',
+    'users.apps.UsersConfig',
     'food.apps.FoodConfig',
     'api.apps.ApiConfig'
 ]
@@ -86,7 +87,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-AUTH_USER_MODEL = 'food.User'
+AUTH_USER_MODEL = 'users.User'
 
 LANGUAGE_CODE = 'ru-RU'
 
@@ -113,7 +114,7 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.AllowAny',
     ],
 }
 
@@ -125,4 +126,9 @@ DJOSER = {
         'current_user': 'api.serializers.CustomUserSerializer',
         'user_list': 'api.serializers.CustomUserSerializer',
     },
+    'PERMISSIONS': {
+        'user': ['rest_framework.permissions.IsAuthenticated'],
+        'user_list': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'],
+    },
+    'HIDE_USERS': False,
 }
