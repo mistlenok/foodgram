@@ -22,7 +22,7 @@ class UserAdmin(UserAdmin):
 
     @admin.display(description='Количество подписчиков')
     def followers_count(self, request):
-        return request.following.all().count()
+        return request.following.count()
 
 
 @admin.register(Follow)

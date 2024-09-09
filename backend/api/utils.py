@@ -2,11 +2,12 @@ import base64
 import hashlib
 
 from django.core.files.base import ContentFile
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers, status
 from rest_framework.response import Response
 
 from .constants import MAX_HASH
-from food.models import IngredientRecipe
+from food.models import IngredientRecipe, Recipe
 
 
 class Base64ImageField(serializers.ImageField):
@@ -34,13 +35,14 @@ def add_ingredients(ingredients, recipe):
     )
 
 
-def add_recipe(request, instance, serializer_name):
+def add_recipe(request, pk, serializer_name):
     """
     Вспомогательная функция для добавления
     рецепта в избранное либо список покупок.
     """
+    recipe = get_object_or_404(Recipe, pk=pk)
     serializer = serializer_name(
-        data={'user': request.user.id, 'recipe': instance.id},
+        data={'user': request.user.id, 'recipe': recipe.id},
         context={'request': request}
     )
     serializer.is_valid(raise_exception=True)
@@ -48,17 +50,19 @@ def add_recipe(request, instance, serializer_name):
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-def delete_recipe(request, model_name, instance, error_message):
+def delete_recipe(request, pk, model_name):
     """
     Вспомогательная функция для удаления рецепта
     из избранного либо из списка покупок.
     """
-    if not model_name.objects.filter(user=request.user,
-                                     recipe=instance).exists():
-        return Response({'errors': error_message},
-                        status=status.HTTP_400_BAD_REQUEST)
-    model_name.objects.filter(user=request.user, recipe=instance).delete()
-    return Response(status=status.HTTP_204_NO_CONTENT)
+    recipe = get_object_or_404(Recipe, id=pk)
+    obj = model_name.objects.filter(user=request.user, recipe=recipe)
+    if obj.exists():
+        obj.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    return Response(
+        {'errors': f'Рецепт с id {pk} не добавлен в список покупок'},
+        status=status.HTTP_400_BAD_REQUEST)
 
 
 def generate_short_url(recipe_id):

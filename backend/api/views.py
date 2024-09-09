@@ -10,7 +10,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .filters import IngredientFilter, RecipeFilter
-from .pagination import CustomPagination
+from .pagination import RecipePagination
 from .permissions import RecipePermission
 from .serializers import (CustomUserSerializer, FavoriteSerializer,
                           FollowSerializer, IngredientSerializer,
@@ -28,7 +28,7 @@ User = get_user_model()
 
 class CustomUserViewSet(UserViewSet):
     queryset = User.objects.all()
-    pagination_class = CustomPagination
+    pagination_class = RecipePagination
     permission_classes = (permissions.AllowAny,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
@@ -85,7 +85,7 @@ class CustomUserViewSet(UserViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @subscribe.mapping.delete
-    def delete_subscribe(self, request):
+    def delete_subscribe(self, request, id):
         """Удаление подписки на пользователя."""
         following = get_object_or_404(User, pk=id)
         if not following.following.filter(user=request.user).exists():
@@ -99,7 +99,6 @@ class CustomUserViewSet(UserViewSet):
     @action(
         methods=('GET',),
         detail=False,
-        pagination_class=CustomPagination,
         permission_classes=(permissions.IsAuthenticated,),
         url_path='subscriptions'
     )
@@ -137,7 +136,7 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     """Вьюсет для рецептов."""
     queryset = Recipe.objects.all()
-    pagination_class = CustomPagination
+    pagination_class = RecipePagination
     permission_classes = (RecipePermission,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
@@ -180,15 +179,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def favorite(self, request, pk):
         """Добавление рецептов в избранное."""
-        recipe = get_object_or_404(Recipe, id=pk)
-        return add_recipe(request, recipe, FavoriteSerializer)
+        return add_recipe(request, pk, FavoriteSerializer)
 
     @favorite.mapping.delete
     def delete_favorite(self, request, pk):
         """Удаление рецептов из избранного."""
-        recipe = get_object_or_404(Recipe, id=pk)
-        error_message = f'Рецепт {recipe} не добавлен в избранное'
-        return delete_recipe(request, Favorite, recipe, error_message)
+        return delete_recipe(request, pk, Favorite)
 
     @action(
         methods=('POST',),
@@ -198,15 +194,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def shopping_cart(self, request, pk):
         """Добавление рецепта в список покупок."""
-        recipe = get_object_or_404(Recipe, id=pk)
-        return add_recipe(request, recipe, ShoppingCartSerializer)
+        return add_recipe(request, pk, ShoppingCartSerializer)
 
     @shopping_cart.mapping.delete
     def shopping_cart_delete(self, request, pk):
         """Удаление рецепта из списка покупок."""
-        recipe = get_object_or_404(Recipe, id=pk)
-        error_message = f'Рецепт {recipe} не добавлен в список покупок'
-        return delete_recipe(request, ShoppingCart, recipe, error_message)
+        return delete_recipe(request, pk, ShoppingCart)
 
     @action(
         methods=('GET',),

@@ -19,9 +19,9 @@ class TagAdmin(admin.ModelAdmin):
     search_fields = ('name', 'slug')
 
 
-class TagInLine(admin.StackedInline):
-    model = Tag.recipes.through
-    extra = 0
+# @admin.register(Tag.recipes.through)
+# class TagRecipe(admin.ModelAdmin):
+#     list_display = ('id', 'recipe__name', 'Tag__slug')
 
 
 @admin.register(Recipe)
@@ -31,9 +31,6 @@ class RecipeAdmin(admin.ModelAdmin):
     list_filter = ('tags', 'author')
     raw_id_fields = ('author',)
     filter_horizontal = ('tags',)
-    inlines = [
-        TagInLine,
-    ]
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(
@@ -60,3 +57,6 @@ class FavoriteAdmin(admin.ModelAdmin):
 class ShoppingCartAdmin(admin.ModelAdmin):
     list_display = ('id', 'recipe', 'user')
     search_fields = ('recipe__name', 'user__username')
+
+
+admin.site.register(Tag.recipes.through)

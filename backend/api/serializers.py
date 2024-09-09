@@ -1,5 +1,4 @@
 from django.contrib.auth import get_user_model
-from django.utils.translation import gettext_lazy as _
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -26,8 +25,7 @@ class CustomUserSerializer(UserSerializer):
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
         if (request and not request.user.is_anonymous):
-            return (request.user.is_authenticated
-                    and obj.following.filter(user=request.user).exists())
+            return obj.following.filter(user=request.user).exists()
         return False
 
 
@@ -77,9 +75,7 @@ class IngredientRecipeWriteSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(
         queryset=Ingredient.objects.all(),
         error_messages={
-            'does_not_exist': _(
-                'Ингредиент с id {pk_value} не существует.'
-            )
+            'does_not_exist': 'Ингредиент с id {pk_value} не существует.'
         }
     )
 
@@ -170,7 +166,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return value
 
     def validate_tags(self, value):
-        tags_set = {tag for tag in value}
+        tags_set = set(value)
         if len(tags_set) != len(value):
             raise ValidationError(
                 {'tags': 'Теги не должны повторяться!'})
@@ -244,8 +240,15 @@ class SubscriptionsSerializer(CustomUserSerializer):
                             'avatar')
 
     def get_recipes(self, obj):
+        """Получает список рецептов."""
         request = self.context.get('request')
-        recipes = obj.recipes.all()
+        if request:
+            recipes_limit = request.query_params.get('recipes_limit')
+            if recipes_limit:
+                try:
+                    recipes = obj.recipes.all()[:int(recipes_limit)]
+                except (ValueError, TypeError):
+                    pass
         return RecipeSmallSerializer(
             recipes[:RECIPES_LIMIT], many=True,
             context={'request': request}).data
